@@ -10,7 +10,7 @@
     body { font-family: system-ui, -apple-system, sans-serif; }
     .trade-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
     .trade-card:hover { transform: translateY(-8px) scale(1.02); }
-    canvas { max-width: 100%; height: auto; image-rendering: crisp-edges; }
+    canvas { max-width: 100%; height: auto; }
   </style>
 </head>
 <body class="bg-zinc-950 text-zinc-100 min-h-screen">
@@ -21,17 +21,22 @@
         <div class="w-14 h-14 bg-emerald-500 rounded-3xl flex items-center justify-center text-4xl">🔨</div>
         <h1 class="text-5xl font-bold tracking-tighter">SpecTap</h1>
       </div>
-      <p class="text-xl text-zinc-400">Clear job specs in 60 seconds • Get better tradie quotes</p>
+      <p class="text-xl text-zinc-400">Clear job specs in 60 seconds • Better tradie quotes</p>
       <div class="badge badge-success mt-4">Perth WA • 2026</div>
     </header>
 
     <!-- Spin Wheel Section -->
-    <div class="mb-12 bg-zinc-900 border border-zinc-700 rounded-3xl p-8 text-center">
+    <div class="mb-12 bg-zinc-900 border border-zinc-700 rounded-3xl p-8 text-center relative">
       <h2 class="text-3xl font-bold mb-2">🎰 Spin to Win a Discount!</h2>
       <p class="text-zinc-400 mb-6">Spin for 5%, 10%, or 20% off your next trade job</p>
       
-      <div class="flex justify-center mb-6">
-        <canvas id="wheel" width="320" height="320"></canvas>
+      <div class="relative flex justify-center mb-6">
+        <!-- Flicky Indicator (red pointer) -->
+        <div class="absolute -top-6 left-1/2 transform -translate-x-1/2 z-20">
+          <div class="w-0 h-0 border-l-[18px] border-l-transparent border-r-[18px] border-r-transparent border-b-[32px] border-b-red-500 drop-shadow-lg"></div>
+        </div>
+        
+        <canvas id="wheel" width="340" height="340"></canvas>
       </div>
 
       <button onclick="spinWheel()" id="spinBtn"
@@ -39,17 +44,17 @@
         SPIN THE WHEEL 🎡
       </button>
       
-      <div id="result" class="mt-6 text-2xl font-bold min-h-[3rem]"></div>
+      <div id="result" class="mt-8 text-2xl font-bold min-h-[4rem]"></div>
     </div>
 
-    <!-- Trade Selection -->
+    <!-- Trade Selection (kept the same) -->
     <div id="home">
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" id="trade-grid"></div>
     </div>
 
-    <!-- Estimator Screen -->
+    <!-- Estimator (simplified for space) -->
     <div id="estimator" class="hidden">
-      <button onclick="backToHome()" class="flex items-center gap-2 text-zinc-400 hover:text-white mb-8">← Back</button>
+      <button onclick="backToHome()" class="flex items-center gap-2 text-zinc-400 hover:text-white mb-8">← Back to Trades</button>
       <h2 id="trade-title" class="text-4xl font-bold mb-8"></h2>
       <div id="questions" class="space-y-8"></div>
 
@@ -67,14 +72,14 @@
   </div>
 
   <script>
-    // === Spin Wheel Data ===
+    // Spin Wheel Data - 6 segments
     const segments = [
-      { label: "20% OFF", color: "#10b981", text: "emerald" },
-      { label: "Banana 🍌", color: "#eab308", text: "yellow" },
-      { label: "10% OFF", color: "#3b82f6", text: "blue" },
-      { label: "Banana 🍌", color: "#eab308", text: "yellow" },
-      { label: "5% OFF", color: "#8b5cf6", text: "violet" },
-      { label: "Banana 🍌", color: "#eab308", text: "yellow" }
+      { label: "20% OFF", color: "#10b981", emoji: "🎉" },
+      { label: "🍌 Banana", color: "#eab308", emoji: "🍌" },
+      { label: "10% OFF", color: "#3b82f6", emoji: "🎉" },
+      { label: "🍌 Banana", color: "#eab308", emoji: "🍌" },
+      { label: "5% OFF",  color: "#8b5cf6", emoji: "🎉" },
+      { label: "🍌 Banana", color: "#eab308", emoji: "🍌" }
     ];
 
     let isSpinning = false;
@@ -84,7 +89,7 @@
     const ctx = canvas.getContext('2d');
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
-    const radius = 150;
+    const radius = 155;
 
     function drawWheel() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -98,27 +103,27 @@
         ctx.fillStyle = seg.color;
         ctx.fill();
         ctx.strokeStyle = "#27272a";
-        ctx.lineWidth = 4;
+        ctx.lineWidth = 6;
         ctx.stroke();
 
-        // Text
+        // Text - improved positioning and shorter labels
         ctx.save();
         ctx.translate(centerX, centerY);
-        ctx.rotate(startAngle + anglePerSegment / 2);
-        ctx.textAlign = "right";
+        ctx.rotate(startAngle + anglePerSegment / 2 + Math.PI / 2); // better rotation for readability
+        ctx.textAlign = "center";
         ctx.fillStyle = "#111827";
-        ctx.font = "bold 18px system-ui";
-        ctx.fillText(seg.label, radius - 30, 8);
+        ctx.font = "bold 19px system-ui";
+        ctx.fillText(seg.label, 0, radius - 45);
         ctx.restore();
       });
 
-      // Center circle
+      // Center hub
       ctx.beginPath();
-      ctx.arc(centerX, centerY, 40, 0, 2 * Math.PI);
+      ctx.arc(centerX, centerY, 45, 0, 2 * Math.PI);
       ctx.fillStyle = "#18181b";
       ctx.fill();
       ctx.strokeStyle = "#a1a1aa";
-      ctx.lineWidth = 8;
+      ctx.lineWidth = 12;
       ctx.stroke();
     }
 
@@ -128,19 +133,18 @@
       document.getElementById('spinBtn').disabled = true;
       document.getElementById('result').innerHTML = '';
 
-      const spins = 5 + Math.random() * 5; // 5-10 full spins
+      const spins = 6 + Math.random() * 6; // more spins for fun
       const extraAngle = Math.random() * 2 * Math.PI;
       const targetAngle = currentAngle + spins * 2 * Math.PI + extraAngle;
 
       let startTime = null;
-      const duration = 4000; // 4 seconds
+      const duration = 4500; // 4.5 seconds
 
       function animate(timestamp) {
         if (!startTime) startTime = timestamp;
         const progress = Math.min((timestamp - startTime) / duration, 1);
         
-        // Ease out for realistic slowing
-        const eased = 1 - Math.pow(1 - progress, 3);
+        const eased = 1 - Math.pow(1 - progress, 4); // nice slow down
         currentAngle = targetAngle * eased;
 
         drawWheel();
@@ -148,18 +152,19 @@
         if (progress < 1) {
           requestAnimationFrame(animate);
         } else {
-          // Finish spin
           isSpinning = false;
           document.getElementById('spinBtn').disabled = false;
-          
-          const finalSegmentIndex = Math.floor(((currentAngle % (2 * Math.PI)) + 2 * Math.PI) / (2 * Math.PI / segments.length)) % segments.length;
-          const prize = segments[finalSegmentIndex];
-          
+
+          // Determine winning segment
+          const normalizedAngle = ((currentAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+          const segmentIndex = Math.floor((2 * Math.PI - normalizedAngle) / (2 * Math.PI / segments.length)) % segments.length;
+          const prize = segments[segmentIndex];
+
           let message = '';
           if (prize.label.includes('%')) {
-            message = `🎉 You won <span class="text-emerald-400">${prize.label}</span>!<br>Use it on your next job quote!`;
+            message = `<span class="text-emerald-400">${prize.emoji} You won ${prize.label}!</span><br><span class="text-zinc-400 text-base">Apply this discount when getting quotes!</span>`;
           } else {
-            message = `🍌 Banana! Better luck next time 🍌<br>Try spinning again!`;
+            message = `🍌 ${prize.label}! Better luck next time 🍌<br><span class="text-zinc-400 text-base">Try spinning again!</span>`;
           }
           document.getElementById('result').innerHTML = message;
         }
@@ -167,14 +172,14 @@
       requestAnimationFrame(animate);
     }
 
-    // === Rest of SpecTap (trades, estimator, etc.) ===
+    // === Simple Trade Selector (rest of the app) ===
     const trades = [
       { id: "fencing", name: "Fencing", icon: "🏡", desc: "Colorbond, timber, pool" },
       { id: "paving", name: "Paving", icon: "🧱", desc: "Brick, stone, concrete" },
       { id: "painting", name: "Painting", icon: "🎨", desc: "Interior & exterior" },
-      { id: "electrical", name: "Electrical", icon: "⚡", desc: "Lights, power, boards" },
-      { id: "plumbing", name: "Plumbing", icon: "🔧", desc: "Taps, hot water, drains" },
-      { id: "landscaping", name: "Landscaping", icon: "🌳", desc: "Turf, retic, walls" }
+      { id: "electrical", name: "Electrical", icon: "⚡", desc: "Lights, power points" },
+      { id: "plumbing", name: "Plumbing", icon: "🔧", desc: "Taps, hot water" },
+      { id: "landscaping", name: "Landscaping", icon: "🌳", desc: "Turf, reticulation" }
     ];
 
     let currentTrade = null;
@@ -197,26 +202,17 @@
       document.getElementById('home').classList.add('hidden');
       document.getElementById('estimator').classList.remove('hidden');
       document.getElementById('trade-title').innerHTML = `${currentTrade.icon} ${currentTrade.name}`;
-      renderQuestions();
-    }
-
-    function renderQuestions() {
-      const qs = [
-        { label: "Job details / Material", key: "type", type: "text" },
-        { label: "Size / Quantity", key: "size", type: "number", placeholder: "e.g. 25m or 40m²" },
-        { label: "Extras or special requests?", key: "notes", type: "textarea" }
-      ];
-
-      const container = document.getElementById('questions');
-      container.innerHTML = qs.map(q => `
+      // Simple questions
+      document.getElementById('questions').innerHTML = `
         <div class="bg-zinc-900 border border-zinc-700 rounded-2xl p-6">
-          <label class="block text-sm font-medium mb-3">${q.label}</label>
-          ${q.type === 'textarea' ? 
-            `<textarea onchange="updateAnswer('${q.key}', this.value)" class="textarea textarea-bordered w-full h-28 bg-zinc-800"></textarea>` :
-            `<input type="${q.type}" onchange="updateAnswer('${q.key}', this.value)" placeholder="${q.placeholder || ''}" class="input input-bordered w-full bg-zinc-800">`
-          }
+          <label class="block text-sm font-medium mb-3">Size / Quantity</label>
+          <input type="text" onchange="updateAnswer('size', this.value)" placeholder="e.g. 25 metres" class="input input-bordered w-full bg-zinc-800">
         </div>
-      `).join('');
+        <div class="bg-zinc-900 border border-zinc-700 rounded-2xl p-6">
+          <label class="block text-sm font-medium mb-3">Extras / Notes</label>
+          <textarea onchange="updateAnswer('notes', this.value)" class="textarea textarea-bordered w-full h-28 bg-zinc-800" placeholder="Gate, colour, urgency..."></textarea>
+        </div>
+      `;
     }
 
     function updateAnswer(key, value) {
@@ -225,41 +221,26 @@
     }
 
     function generateSpec() {
-      let spec = `JOB SPECIFICATION — ${currentTrade.name}\n`;
-      spec += `Date: ${new Date().toLocaleDateString('en-AU')}\n`;
-      spec += `Location: Perth, Western Australia\n\n`;
-      spec += `────────────────────────────\n\n`;
-
-      Object.keys(answers).forEach(key => {
-        if (answers[key]) spec += `${key.toUpperCase()}: ${answers[key]}\n\n`;
-      });
-
-      spec += `Please quote exactly on the scope above.\nThanks!`;
+      let spec = `JOB SPEC — ${currentTrade.name}\nDate: ${new Date().toLocaleDateString('en-AU')}\nLocation: Perth WA\n\n`;
+      Object.keys(answers).forEach(k => { if (answers[k]) spec += `${k.toUpperCase()}: ${answers[k]}\n`; });
+      spec += `\nPlease quote exactly on this scope.`;
       document.getElementById('spec-output').textContent = spec;
     }
 
-    function copySpec() {
-      navigator.clipboard.writeText(document.getElementById('spec-output').textContent).then(() => alert("✅ Copied to clipboard!"));
-    }
-
+    function copySpec() { navigator.clipboard.writeText(document.getElementById('spec-output').textContent).then(() => alert("✅ Copied!")); }
     function downloadPDF() {
       const text = document.getElementById('spec-output').textContent;
       const win = window.open('', '_blank');
-      win.document.write(`<pre style="padding:40px;font-family:monospace;white-space:pre-wrap;">${text}</pre>`);
-      win.document.close();
-      setTimeout(() => win.print(), 500);
+      win.document.write(`<pre style="padding:40px; font-family:monospace; white-space:pre-wrap;">${text}</pre>`);
+      win.document.close(); setTimeout(() => win.print(), 500);
     }
-
-    function shareLink() {
-      alert("🔗 Share the copied spec with tradies via message or email!");
-    }
-
+    function shareLink() { alert("Copy the spec above and send to tradies!"); }
     function backToHome() {
       document.getElementById('estimator').classList.add('hidden');
       document.getElementById('home').classList.remove('hidden');
     }
 
-    // Init
+    // Start everything
     window.onload = () => {
       drawWheel();
       renderHome();
