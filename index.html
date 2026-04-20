@@ -3,81 +3,178 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SpecTap — Pro Job Specs for Tradie Quotes</title>
+  <title>SpecTap — Spin to Win + Pro Job Specs</title>
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet">
   <style>
     body { font-family: system-ui, -apple-system, sans-serif; }
-    .trade-card {
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .trade-card:hover {
-      transform: translateY(-8px) scale(1.02);
-      box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.4);
-    }
-    .spec-box {
-      font-family: ui-monospace, monospace;
-      white-space: pre-wrap;
-    }
+    .trade-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    .trade-card:hover { transform: translateY(-8px) scale(1.02); }
+    canvas { max-width: 100%; height: auto; image-rendering: crisp-edges; }
   </style>
 </head>
 <body class="bg-zinc-950 text-zinc-100 min-h-screen">
   <div class="max-w-4xl mx-auto p-5 md:p-8">
     <!-- Header -->
-    <header class="text-center mb-12">
+    <header class="text-center mb-10">
       <div class="inline-flex items-center gap-3 mb-4">
-        <div class="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center text-3xl">🔨</div>
-        <h1 class="text-5xl font-bold tracking-tighter text-white">SpecTap</h1>
+        <div class="w-14 h-14 bg-emerald-500 rounded-3xl flex items-center justify-center text-4xl">🔨</div>
+        <h1 class="text-5xl font-bold tracking-tighter">SpecTap</h1>
       </div>
-      <p class="text-2xl text-zinc-400 max-w-md mx-auto">Build clear, professional job specs in ~60 seconds.<br>Get better, comparable quotes from tradies.</p>
-      <div class="flex justify-center gap-4 mt-6 text-sm">
-        <div class="badge badge-success badge-lg">Perth • WA</div>
-        <div class="badge badge-outline badge-lg">2026 Pricing</div>
-      </div>
+      <p class="text-xl text-zinc-400">Clear job specs in 60 seconds • Get better tradie quotes</p>
+      <div class="badge badge-success mt-4">Perth WA • 2026</div>
     </header>
 
-    <!-- Home Screen -->
+    <!-- Spin Wheel Section -->
+    <div class="mb-12 bg-zinc-900 border border-zinc-700 rounded-3xl p-8 text-center">
+      <h2 class="text-3xl font-bold mb-2">🎰 Spin to Win a Discount!</h2>
+      <p class="text-zinc-400 mb-6">Spin for 5%, 10%, or 20% off your next trade job</p>
+      
+      <div class="flex justify-center mb-6">
+        <canvas id="wheel" width="320" height="320"></canvas>
+      </div>
+
+      <button onclick="spinWheel()" id="spinBtn"
+        class="btn btn-primary btn-lg text-xl px-12 py-4 rounded-2xl shadow-xl">
+        SPIN THE WHEEL 🎡
+      </button>
+      
+      <div id="result" class="mt-6 text-2xl font-bold min-h-[3rem]"></div>
+    </div>
+
+    <!-- Trade Selection -->
     <div id="home">
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" id="trade-grid"></div>
     </div>
 
     <!-- Estimator Screen -->
     <div id="estimator" class="hidden">
-      <button onclick="backToHome()" class="flex items-center gap-2 text-zinc-400 hover:text-white mb-8 transition-colors">
-        ← Back to all trades
-      </button>
-
-      <div class="flex items-center justify-between mb-8">
-        <h2 id="trade-title" class="text-4xl font-bold"></h2>
-        <div id="progress" class="text-sm text-emerald-400 font-medium"></div>
-      </div>
-
+      <button onclick="backToHome()" class="flex items-center gap-2 text-zinc-400 hover:text-white mb-8">← Back</button>
+      <h2 id="trade-title" class="text-4xl font-bold mb-8"></h2>
       <div id="questions" class="space-y-8"></div>
 
-      <div class="mt-16 bg-zinc-900 border border-zinc-700 rounded-3xl p-8">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-2xl font-semibold">Your Professional Job Spec</h3>
-          <span class="text-xs uppercase tracking-widest text-zinc-500">Ready to send</span>
-        </div>
-        <div id="spec-output" class="spec-box bg-black/50 border border-zinc-800 rounded-2xl p-7 text-sm leading-relaxed text-zinc-300 min-h-[240px]"></div>
-
+      <div class="mt-12 bg-zinc-900 border border-zinc-700 rounded-3xl p-8">
+        <h3 class="text-2xl font-semibold mb-4">Your Job Specification</h3>
+        <div id="spec-output" class="bg-black/60 border border-zinc-800 rounded-2xl p-7 text-sm leading-relaxed whitespace-pre-wrap min-h-[220px] font-mono"></div>
+        
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
-          <button onclick="copySpec()" class="btn btn-primary h-14 text-lg">📋 Copy Spec</button>
-          <button onclick="downloadPDF()" class="btn btn-secondary h-14 text-lg">📄 Save as PDF</button>
-          <button onclick="shareLink()" class="btn btn-accent h-14 text-lg">🔗 Share Link</button>
+          <button onclick="copySpec()" class="btn btn-primary">📋 Copy</button>
+          <button onclick="downloadPDF()" class="btn btn-secondary">📄 PDF</button>
+          <button onclick="shareLink()" class="btn btn-accent">🔗 Share</button>
         </div>
       </div>
     </div>
   </div>
 
   <script>
+    // === Spin Wheel Data ===
+    const segments = [
+      { label: "20% OFF", color: "#10b981", text: "emerald" },
+      { label: "Banana 🍌", color: "#eab308", text: "yellow" },
+      { label: "10% OFF", color: "#3b82f6", text: "blue" },
+      { label: "Banana 🍌", color: "#eab308", text: "yellow" },
+      { label: "5% OFF", color: "#8b5cf6", text: "violet" },
+      { label: "Banana 🍌", color: "#eab308", text: "yellow" }
+    ];
+
+    let isSpinning = false;
+    let currentAngle = 0;
+
+    const canvas = document.getElementById('wheel');
+    const ctx = canvas.getContext('2d');
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const radius = 150;
+
+    function drawWheel() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const anglePerSegment = (2 * Math.PI) / segments.length;
+
+      segments.forEach((seg, i) => {
+        const startAngle = currentAngle + i * anglePerSegment;
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, startAngle, startAngle + anglePerSegment);
+        ctx.fillStyle = seg.color;
+        ctx.fill();
+        ctx.strokeStyle = "#27272a";
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        // Text
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate(startAngle + anglePerSegment / 2);
+        ctx.textAlign = "right";
+        ctx.fillStyle = "#111827";
+        ctx.font = "bold 18px system-ui";
+        ctx.fillText(seg.label, radius - 30, 8);
+        ctx.restore();
+      });
+
+      // Center circle
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 40, 0, 2 * Math.PI);
+      ctx.fillStyle = "#18181b";
+      ctx.fill();
+      ctx.strokeStyle = "#a1a1aa";
+      ctx.lineWidth = 8;
+      ctx.stroke();
+    }
+
+    function spinWheel() {
+      if (isSpinning) return;
+      isSpinning = true;
+      document.getElementById('spinBtn').disabled = true;
+      document.getElementById('result').innerHTML = '';
+
+      const spins = 5 + Math.random() * 5; // 5-10 full spins
+      const extraAngle = Math.random() * 2 * Math.PI;
+      const targetAngle = currentAngle + spins * 2 * Math.PI + extraAngle;
+
+      let startTime = null;
+      const duration = 4000; // 4 seconds
+
+      function animate(timestamp) {
+        if (!startTime) startTime = timestamp;
+        const progress = Math.min((timestamp - startTime) / duration, 1);
+        
+        // Ease out for realistic slowing
+        const eased = 1 - Math.pow(1 - progress, 3);
+        currentAngle = targetAngle * eased;
+
+        drawWheel();
+
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          // Finish spin
+          isSpinning = false;
+          document.getElementById('spinBtn').disabled = false;
+          
+          const finalSegmentIndex = Math.floor(((currentAngle % (2 * Math.PI)) + 2 * Math.PI) / (2 * Math.PI / segments.length)) % segments.length;
+          const prize = segments[finalSegmentIndex];
+          
+          let message = '';
+          if (prize.label.includes('%')) {
+            message = `🎉 You won <span class="text-emerald-400">${prize.label}</span>!<br>Use it on your next job quote!`;
+          } else {
+            message = `🍌 Banana! Better luck next time 🍌<br>Try spinning again!`;
+          }
+          document.getElementById('result').innerHTML = message;
+        }
+      }
+      requestAnimationFrame(animate);
+    }
+
+    // === Rest of SpecTap (trades, estimator, etc.) ===
     const trades = [
-      { id: "fencing", name: "Fencing", icon: "🏡", color: "emerald", desc: "Colorbond, timber, aluminium, pool" },
-      { id: "paving", name: "Paving", icon: "🧱", color: "amber", desc: "Brick, concrete, stone, aggregate" },
-      { id: "painting", name: "Painting", icon: "🎨", color: "violet", desc: "Interior, exterior, prep & finish" },
-      { id: "electrical", name: "Electrical", icon: "⚡", color: "blue", desc: "Lights, power points, switchboards" },
-      { id: "plumbing", name: "Plumbing", icon: "🔧", color: "cyan", desc: "Taps, hot water, drains, gas" },
-      { id: "landscaping", name: "Landscaping", icon: "🌳", color: "lime", desc: "Turf, retic, retaining walls" }
+      { id: "fencing", name: "Fencing", icon: "🏡", desc: "Colorbond, timber, pool" },
+      { id: "paving", name: "Paving", icon: "🧱", desc: "Brick, stone, concrete" },
+      { id: "painting", name: "Painting", icon: "🎨", desc: "Interior & exterior" },
+      { id: "electrical", name: "Electrical", icon: "⚡", desc: "Lights, power, boards" },
+      { id: "plumbing", name: "Plumbing", icon: "🔧", desc: "Taps, hot water, drains" },
+      { id: "landscaping", name: "Landscaping", icon: "🌳", desc: "Turf, retic, walls" }
     ];
 
     let currentTrade = null;
@@ -86,11 +183,10 @@
     function renderHome() {
       const container = document.getElementById('trade-grid');
       container.innerHTML = trades.map(t => `
-        <div onclick="startEstimator('${t.id}')" class="trade-card bg-zinc-900 border border-zinc-700 rounded-3xl p-8 cursor-pointer group">
-          <div class="text-7xl mb-6 transition-transform group-hover:scale-110">${t.icon}</div>
+        <div onclick="startEstimator('${t.id}')" class="trade-card bg-zinc-900 border border-zinc-700 rounded-3xl p-8 cursor-pointer">
+          <div class="text-7xl mb-6">${t.icon}</div>
           <h3 class="text-2xl font-semibold mb-2">${t.name}</h3>
           <p class="text-zinc-400">${t.desc}</p>
-          <div class="mt-8 text-xs uppercase tracking-widest text-emerald-400 font-medium">Tap to start →</div>
         </div>
       `).join('');
     }
@@ -105,26 +201,20 @@
     }
 
     function renderQuestions() {
-      // Simple demo questions - you can expand later
-      const demoQuestions = [
-        { label: "Job Type / Material", key: "type", type: "select", options: ["Standard", "Premium", "Custom"] },
-        { label: "Size / Quantity", key: "size", type: "number", placeholder: "e.g. 25 metres or 40 m²" },
-        { label: "Any extras or special requirements?", key: "notes", type: "textarea" }
+      const qs = [
+        { label: "Job details / Material", key: "type", type: "text" },
+        { label: "Size / Quantity", key: "size", type: "number", placeholder: "e.g. 25m or 40m²" },
+        { label: "Extras or special requests?", key: "notes", type: "textarea" }
       ];
 
       const container = document.getElementById('questions');
-      container.innerHTML = demoQuestions.map((q, i) => `
+      container.innerHTML = qs.map(q => `
         <div class="bg-zinc-900 border border-zinc-700 rounded-2xl p-6">
           <label class="block text-sm font-medium mb-3">${q.label}</label>
-          ${q.type === 'select' ? `
-            <select onchange="updateAnswer('${q.key}', this.value)" class="select select-bordered w-full bg-zinc-800 border-zinc-600 text-white">
-              <option value="">Select option...</option>
-              ${q.options.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
-            </select>` : q.type === 'number' ? `
-            <input type="number" onchange="updateAnswer('${q.key}', this.value)" placeholder="${q.placeholder}" class="input input-bordered w-full bg-zinc-800 border-zinc-600 text-white">
-          ` : `
-            <textarea onchange="updateAnswer('${q.key}', this.value)" class="textarea textarea-bordered w-full h-32 bg-zinc-800 border-zinc-600 text-white" placeholder="e.g. Include gate, specific colour, urgency..."></textarea>
-          `}
+          ${q.type === 'textarea' ? 
+            `<textarea onchange="updateAnswer('${q.key}', this.value)" class="textarea textarea-bordered w-full h-28 bg-zinc-800"></textarea>` :
+            `<input type="${q.type}" onchange="updateAnswer('${q.key}', this.value)" placeholder="${q.placeholder || ''}" class="input input-bordered w-full bg-zinc-800">`
+          }
         </div>
       `).join('');
     }
@@ -135,45 +225,33 @@
     }
 
     function generateSpec() {
-      let spec = `📋 PROFESSIONAL JOB SPECIFICATION\n`;
-      spec += `Trade: ${currentTrade.name}\n`;
+      let spec = `JOB SPECIFICATION — ${currentTrade.name}\n`;
       spec += `Date: ${new Date().toLocaleDateString('en-AU')}\n`;
       spec += `Location: Perth, Western Australia\n\n`;
       spec += `────────────────────────────\n\n`;
 
       Object.keys(answers).forEach(key => {
-        if (answers[key]) {
-          spec += `${key.toUpperCase()}: ${answers[key]}\n\n`;
-        }
+        if (answers[key]) spec += `${key.toUpperCase()}: ${answers[key]}\n\n`;
       });
 
-      spec += `Please provide a fixed price quote based exactly on the details above.\n`;
-      spec += `Any questions or site visit needed? Let me know.\n\n`;
-      spec += `Thank you!`;
-
+      spec += `Please quote exactly on the scope above.\nThanks!`;
       document.getElementById('spec-output').textContent = spec;
     }
 
     function copySpec() {
-      const text = document.getElementById('spec-output').textContent;
-      navigator.clipboard.writeText(text).then(() => {
-        alert("✅ Spec copied to clipboard!\nPaste it into SMS, email, or Facebook message.");
-      });
+      navigator.clipboard.writeText(document.getElementById('spec-output').textContent).then(() => alert("✅ Copied to clipboard!"));
     }
 
     function downloadPDF() {
       const text = document.getElementById('spec-output').textContent;
       const win = window.open('', '_blank');
-      win.document.write(`
-        <html><head><title>SpecTap Job Spec</title></head>
-        <body style="padding:40px; font-family:monospace; line-height:1.7; white-space:pre-wrap;">${text}</body></html>
-      `);
+      win.document.write(`<pre style="padding:40px;font-family:monospace;white-space:pre-wrap;">${text}</pre>`);
       win.document.close();
       setTimeout(() => win.print(), 500);
     }
 
     function shareLink() {
-      alert("🔗 Shareable link feature coming soon!\n\nFor now: Copy the spec above and send it directly to tradies.");
+      alert("🔗 Share the copied spec with tradies via message or email!");
     }
 
     function backToHome() {
@@ -181,8 +259,11 @@
       document.getElementById('home').classList.remove('hidden');
     }
 
-    // Initialize
-    window.onload = renderHome;
+    // Init
+    window.onload = () => {
+      drawWheel();
+      renderHome();
+    };
   </script>
 </body>
 </html>
