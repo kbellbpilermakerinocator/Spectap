@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SpecTap — Clear Job Specs for Tradie Quotes</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@4/dist/full.min.css" rel="stylesheet" type="text/css" />
+  <script>
+    tailwind.config = {
+      content: [],
+      theme: { extend: {} },
+      plugins: [require('daisyui')],
+    }
+  </script>
+  <style>
+    .trade-card { transition: all 0.2s; }
+    .trade-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); }
+  </style>
+</head>
+<body class="bg-base-200 min-h-screen">
+  <div class="max-w-5xl mx-auto p-6">
+    <header class="text-center mb-10">
+      <h1 class="text-5xl font-bold text-primary mb-2">SpecTap</h1>
+      <p class="text-2xl text-base-content/70">Send complete job specs to tradies in ~60 seconds</p>
+      <p class="text-sm mt-2 text-success">Built for Australia • Local pricing • Free & Open Source</p>
+    </header>
+
+    <div id="home" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Trades populated by JS -->
+    </div>
+
+    <div id="estimator" class="hidden">
+      <button onclick="backToHome()" class="btn btn-ghost mb-6">← Back to Trades</button>
+      <div class="flex justify-between items-center mb-6">
+        <h2 id="trade-title" class="text-3xl font-bold"></h2>
+        <div class="badge badge-success">Perth / WA focused</div>
+      </div>
+      <div id="questions" class="space-y-8"></div>
+
+      <div class="mt-12 border-t pt-8">
+        <h3 class="text-xl font-semibold mb-4">Your Job Specification</h3>
+        <div id="spec-output" class="bg-base-100 p-6 rounded-xl border text-lg leading-relaxed whitespace-pre-wrap min-h-[200px]"></div>
+        
+        <div class="flex flex-wrap gap-4 mt-6">
+          <button onclick="copySpec()" class="btn btn-primary flex-1">📋 Copy to Clipboard</button>
+          <button onclick="downloadPDF()" class="btn btn-secondary flex-1">📄 Download PDF</button>
+          <button onclick="shareLink()" class="btn btn-accent flex-1">🔗 Shareable Link</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="trades.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
