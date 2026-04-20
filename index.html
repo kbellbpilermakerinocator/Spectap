@@ -8,14 +8,11 @@
   <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet">
   <style>
     body { font-family: system-ui, -apple-system, sans-serif; }
-    .trade-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-    .trade-card:hover { transform: translateY(-8px) scale(1.02); }
     canvas { max-width: 100%; height: auto; }
   </style>
 </head>
 <body class="bg-zinc-950 text-zinc-100 min-h-screen">
   <div class="max-w-4xl mx-auto p-5 md:p-8">
-    <!-- Header -->
     <header class="text-center mb-10">
       <div class="inline-flex items-center gap-3 mb-4">
         <div class="w-14 h-14 bg-emerald-500 rounded-3xl flex items-center justify-center text-4xl">🔨</div>
@@ -25,36 +22,40 @@
       <div class="badge badge-success mt-4">Perth WA • 2026</div>
     </header>
 
-    <!-- Spin Wheel Section -->
+    <!-- Spin Wheel -->
     <div class="mb-12 bg-zinc-900 border border-zinc-700 rounded-3xl p-8 text-center relative">
       <h2 class="text-3xl font-bold mb-2">🎰 Spin to Win a Discount!</h2>
       <p class="text-zinc-400 mb-6">Spin for 5%, 10%, or 20% off your next trade job</p>
       
-      <div class="relative flex justify-center mb-6">
-        <!-- Flicky Indicator (red pointer) -->
-        <div class="absolute -top-6 left-1/2 transform -translate-x-1/2 z-20">
-          <div class="w-0 h-0 border-l-[18px] border-l-transparent border-r-[18px] border-r-transparent border-b-[32px] border-b-red-500 drop-shadow-lg"></div>
+      <div class="relative flex justify-center mb-8">
+        <!-- Fixed Red Pointer -->
+        <div class="absolute -top-3 left-1/2 -translate-x-1/2 z-30">
+          <div class="w-0 h-0 
+                      border-l-[22px] border-l-transparent 
+                      border-r-[22px] border-r-transparent 
+                      border-b-[38px] border-b-red-500 
+                      drop-shadow-2xl"></div>
         </div>
         
-        <canvas id="wheel" width="340" height="340"></canvas>
+        <canvas id="wheel" width="360" height="360"></canvas>
       </div>
 
-      <button onclick="spinWheel()" id="spinBtn"
-        class="btn btn-primary btn-lg text-xl px-12 py-4 rounded-2xl shadow-xl">
+      <button onclick="spinWheel()" id="spinBtn" 
+        class="btn btn-primary btn-lg text-xl px-14 py-4 rounded-2xl">
         SPIN THE WHEEL 🎡
       </button>
-      
-      <div id="result" class="mt-8 text-2xl font-bold min-h-[4rem]"></div>
+
+      <div id="result" class="mt-8 text-2xl font-bold min-h-[4.5rem]"></div>
     </div>
 
-    <!-- Trade Selection (kept the same) -->
+    <!-- Trade Selection -->
     <div id="home">
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" id="trade-grid"></div>
     </div>
 
-    <!-- Estimator (simplified for space) -->
+    <!-- Estimator -->
     <div id="estimator" class="hidden">
-      <button onclick="backToHome()" class="flex items-center gap-2 text-zinc-400 hover:text-white mb-8">← Back to Trades</button>
+      <button onclick="backToHome()" class="flex items-center gap-2 text-zinc-400 hover:text-white mb-8">← Back</button>
       <h2 id="trade-title" class="text-4xl font-bold mb-8"></h2>
       <div id="questions" class="space-y-8"></div>
 
@@ -72,14 +73,13 @@
   </div>
 
   <script>
-    // Spin Wheel Data - 6 segments
     const segments = [
-      { label: "20% OFF", color: "#10b981", emoji: "🎉" },
-      { label: "🍌 Banana", color: "#eab308", emoji: "🍌" },
-      { label: "10% OFF", color: "#3b82f6", emoji: "🎉" },
-      { label: "🍌 Banana", color: "#eab308", emoji: "🍌" },
-      { label: "5% OFF",  color: "#8b5cf6", emoji: "🎉" },
-      { label: "🍌 Banana", color: "#eab308", emoji: "🍌" }
+      { label: "20% OFF", color: "#10b981" },
+      { label: "🍌 Banana", color: "#eab308" },
+      { label: "10% OFF", color: "#3b82f6" },
+      { label: "🍌 Banana", color: "#eab308" },
+      { label: "5% OFF", color: "#8b5cf6" },
+      { label: "🍌 Banana", color: "#eab308" }
     ];
 
     let isSpinning = false;
@@ -89,7 +89,7 @@
     const ctx = canvas.getContext('2d');
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
-    const radius = 155;
+    const radius = 165;
 
     function drawWheel() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -102,29 +102,26 @@
         ctx.arc(centerX, centerY, radius, startAngle, startAngle + anglePerSegment);
         ctx.fillStyle = seg.color;
         ctx.fill();
-        ctx.strokeStyle = "#27272a";
-        ctx.lineWidth = 6;
+        ctx.strokeStyle = "#18181b";
+        ctx.lineWidth = 8;
         ctx.stroke();
 
-        // Text - improved positioning and shorter labels
+        // Improved text
         ctx.save();
         ctx.translate(centerX, centerY);
-        ctx.rotate(startAngle + anglePerSegment / 2 + Math.PI / 2); // better rotation for readability
+        ctx.rotate(startAngle + anglePerSegment / 2);
         ctx.textAlign = "center";
         ctx.fillStyle = "#111827";
-        ctx.font = "bold 19px system-ui";
-        ctx.fillText(seg.label, 0, radius - 45);
+        ctx.font = "bold 21px system-ui";
+        ctx.fillText(seg.label, 0, -radius + 68);
         ctx.restore();
       });
 
-      // Center hub
+      // Center
       ctx.beginPath();
-      ctx.arc(centerX, centerY, 45, 0, 2 * Math.PI);
+      ctx.arc(centerX, centerY, 48, 0, 2 * Math.PI);
       ctx.fillStyle = "#18181b";
       ctx.fill();
-      ctx.strokeStyle = "#a1a1aa";
-      ctx.lineWidth = 12;
-      ctx.stroke();
     }
 
     function spinWheel() {
@@ -133,18 +130,17 @@
       document.getElementById('spinBtn').disabled = true;
       document.getElementById('result').innerHTML = '';
 
-      const spins = 6 + Math.random() * 6; // more spins for fun
+      const spins = 7 + Math.random() * 5;
       const extraAngle = Math.random() * 2 * Math.PI;
       const targetAngle = currentAngle + spins * 2 * Math.PI + extraAngle;
 
       let startTime = null;
-      const duration = 4500; // 4.5 seconds
+      const duration = 4800;
 
       function animate(timestamp) {
         if (!startTime) startTime = timestamp;
         const progress = Math.min((timestamp - startTime) / duration, 1);
-        
-        const eased = 1 - Math.pow(1 - progress, 4); // nice slow down
+        const eased = 1 - Math.pow(1 - progress, 4);
         currentAngle = targetAngle * eased;
 
         drawWheel();
@@ -155,31 +151,34 @@
           isSpinning = false;
           document.getElementById('spinBtn').disabled = false;
 
-          // Determine winning segment
-          const normalizedAngle = ((currentAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-          const segmentIndex = Math.floor((2 * Math.PI - normalizedAngle) / (2 * Math.PI / segments.length)) % segments.length;
-          const prize = segments[segmentIndex];
+          const normalized = (currentAngle % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+          const index = Math.floor((2 * Math.PI - normalized) / (2 * Math.PI / segments.length)) % segments.length;
+          const prize = segments[index];
 
-          let message = '';
           if (prize.label.includes('%')) {
-            message = `<span class="text-emerald-400">${prize.emoji} You won ${prize.label}!</span><br><span class="text-zinc-400 text-base">Apply this discount when getting quotes!</span>`;
+            document.getElementById('result').innerHTML = `
+              <span class="text-emerald-400 text-3xl">🎉 You won ${prize.label}!</span><br>
+              <span class="text-zinc-400">Apply this discount when getting quotes!</span>
+            `;
           } else {
-            message = `🍌 ${prize.label}! Better luck next time 🍌<br><span class="text-zinc-400 text-base">Try spinning again!</span>`;
+            document.getElementById('result').innerHTML = `
+              🍌 <span class="text-yellow-400">${prize.label}</span>! Better luck next time 🍌<br>
+              <span class="text-zinc-400">Spin again for a discount!</span>
+            `;
           }
-          document.getElementById('result').innerHTML = message;
         }
       }
       requestAnimationFrame(animate);
     }
 
-    // === Simple Trade Selector (rest of the app) ===
+    // Trade selector (kept simple)
     const trades = [
-      { id: "fencing", name: "Fencing", icon: "🏡", desc: "Colorbond, timber, pool" },
-      { id: "paving", name: "Paving", icon: "🧱", desc: "Brick, stone, concrete" },
-      { id: "painting", name: "Painting", icon: "🎨", desc: "Interior & exterior" },
-      { id: "electrical", name: "Electrical", icon: "⚡", desc: "Lights, power points" },
-      { id: "plumbing", name: "Plumbing", icon: "🔧", desc: "Taps, hot water" },
-      { id: "landscaping", name: "Landscaping", icon: "🌳", desc: "Turf, reticulation" }
+      { id: "fencing", name: "Fencing", icon: "🏡" },
+      { id: "paving", name: "Paving", icon: "🧱" },
+      { id: "painting", name: "Painting", icon: "🎨" },
+      { id: "electrical", name: "Electrical", icon: "⚡" },
+      { id: "plumbing", name: "Plumbing", icon: "🔧" },
+      { id: "landscaping", name: "Landscaping", icon: "🌳" }
     ];
 
     let currentTrade = null;
@@ -190,8 +189,7 @@
       container.innerHTML = trades.map(t => `
         <div onclick="startEstimator('${t.id}')" class="trade-card bg-zinc-900 border border-zinc-700 rounded-3xl p-8 cursor-pointer">
           <div class="text-7xl mb-6">${t.icon}</div>
-          <h3 class="text-2xl font-semibold mb-2">${t.name}</h3>
-          <p class="text-zinc-400">${t.desc}</p>
+          <h3 class="text-2xl font-semibold">${t.name}</h3>
         </div>
       `).join('');
     }
@@ -201,16 +199,15 @@
       answers = {};
       document.getElementById('home').classList.add('hidden');
       document.getElementById('estimator').classList.remove('hidden');
-      document.getElementById('trade-title').innerHTML = `${currentTrade.icon} ${currentTrade.name}`;
-      // Simple questions
+      document.getElementById('trade-title').textContent = currentTrade.name;
       document.getElementById('questions').innerHTML = `
         <div class="bg-zinc-900 border border-zinc-700 rounded-2xl p-6">
-          <label class="block text-sm font-medium mb-3">Size / Quantity</label>
-          <input type="text" onchange="updateAnswer('size', this.value)" placeholder="e.g. 25 metres" class="input input-bordered w-full bg-zinc-800">
+          <label class="block mb-3 text-sm font-medium">Size / Quantity</label>
+          <input type="text" onchange="updateAnswer('size', this.value)" class="input input-bordered w-full bg-zinc-800" placeholder="e.g. 25 metres">
         </div>
         <div class="bg-zinc-900 border border-zinc-700 rounded-2xl p-6">
-          <label class="block text-sm font-medium mb-3">Extras / Notes</label>
-          <textarea onchange="updateAnswer('notes', this.value)" class="textarea textarea-bordered w-full h-28 bg-zinc-800" placeholder="Gate, colour, urgency..."></textarea>
+          <label class="block mb-3 text-sm font-medium">Extras / Notes</label>
+          <textarea onchange="updateAnswer('notes', this.value)" class="textarea textarea-bordered w-full h-28 bg-zinc-800"></textarea>
         </div>
       `;
     }
@@ -222,8 +219,8 @@
 
     function generateSpec() {
       let spec = `JOB SPEC — ${currentTrade.name}\nDate: ${new Date().toLocaleDateString('en-AU')}\nLocation: Perth WA\n\n`;
-      Object.keys(answers).forEach(k => { if (answers[k]) spec += `${k.toUpperCase()}: ${answers[k]}\n`; });
-      spec += `\nPlease quote exactly on this scope.`;
+      Object.keys(answers).forEach(k => { if (answers[k]) spec += `${k.toUpperCase()}: ${answers[k]}\n\n`; });
+      spec += `Please quote exactly on this scope.`;
       document.getElementById('spec-output').textContent = spec;
     }
 
@@ -231,16 +228,16 @@
     function downloadPDF() {
       const text = document.getElementById('spec-output').textContent;
       const win = window.open('', '_blank');
-      win.document.write(`<pre style="padding:40px; font-family:monospace; white-space:pre-wrap;">${text}</pre>`);
-      win.document.close(); setTimeout(() => win.print(), 500);
+      win.document.write(`<pre style="padding:40px;font-family:monospace;white-space:pre-wrap;">${text}</pre>`);
+      win.document.close();
+      setTimeout(() => win.print(), 500);
     }
-    function shareLink() { alert("Copy the spec above and send to tradies!"); }
+    function shareLink() { alert("Copy the spec and send to tradies!"); }
     function backToHome() {
       document.getElementById('estimator').classList.add('hidden');
       document.getElementById('home').classList.remove('hidden');
     }
 
-    // Start everything
     window.onload = () => {
       drawWheel();
       renderHome();
