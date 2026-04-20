@@ -1,4 +1,3 @@
-
 # SpecTap — Better Job Specs for Tradie Quotes
 
 A free, open-source tool to create clear, itemised job specifications for tradespeople in under 60 seconds.
