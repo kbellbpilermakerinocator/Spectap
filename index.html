@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SpecTap — Clear Job Specs for Tradie Quotes</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet">
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; }
+    .trade-card { transition: transform 0.2s, box-shadow 0.2s; }
+    .trade-card:hover { transform: translateY(-6px); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); }
+  </style>
+</head>
+<body class="bg-zinc-950 text-white min-h-screen">
+  <div class="max-w-5xl mx-auto p-4 md:p-6">
+    <header class="text-center mb-10">
+      <h1 class="text-5xl font-bold text-emerald-400 mb-3">SpecTap</h1>
+      <p class="text-xl md:text-2xl">Send complete job specs to tradies in ~60 seconds</p>
+      <p class="text-emerald-500 mt-2 text-sm md:text-base">Perth / WA focused • Free & Open Source</p>
+    </header>
+
+    <div id="home" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Trade cards added by JS -->
+    </div>
+
+    <div id="estimator" class="hidden">
+      <button onclick="backToHome()" class="btn btn-ghost mb-6 text-white">← Back to Trades</button>
+      
+      <div class="flex justify-between items-center mb-6">
+        <h2 id="trade-title" class="text-3xl font-bold"></h2>
+        <div class="badge badge-success">Perth WA</div>
+      </div>
+
+      <div id="questions" class="space-y-6"></div>
+
+      <div class="mt-12 border-t border-zinc-700 pt-8">
+        <h3 class="text-2xl font-semibold mb-4">Your Job Specification</h3>
+        <div id="spec-output" class="bg-zinc-900 p-6 rounded-2xl border border-zinc-700 text-base leading-relaxed whitespace-pre-wrap min-h-[200px] font-mono"></div>
+        
+        <div class="flex flex-col sm:flex-row gap-4 mt-8">
+          <button onclick="copySpec()" class="btn btn-primary flex-1">📋 Copy to Clipboard</button>
+          <button onclick="downloadPDF()" class="btn btn-secondary flex-1">📄 Download PDF</button>
+          <button onclick="shareLink()" class="btn btn-accent flex-1">🔗 Shareable Link</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // === Trades Data (easy to add more) ===
+    const trades = [
+      {
+        id: "fencing",
+        name: "Fencing",
+        icon: "🏡",
+        desc: "Colorbond, timber, aluminium, pool fencing",
+        questions: [
+          { type: "select", label: "Fence Type", options: ["Colorbond Steel", "Timber", "Aluminium", "Pool Safety"], key: "type" },
+          { type: "number", label: "Length (metres)", key: "length", placeholder: "e.g. 30" },
+          { type: "select", label: "Height", options: ["1.5m", "1.8m", "2.0m", "2.4m"], key: "height" },
+          { type: "checkbox", label: "Include Gate(s)", key: "gate" },
+          { type: "textarea", label: "Extras / Notes", key: "notes" }
+        ]
+      },
+      {
+        id: "paving",
+        name: "Paving",
+        icon: "🧱",
+        desc: "Brick, concrete, stone, exposed aggregate",
+        questions: [
+          { type: "select", label: "Material", options: ["Clay Brick", "Concrete Pavers", "Natural Stone", "Exposed Aggregate"], key: "material" },
+          { type: "number", label: "Area (m²)", key: "area", placeholder: "e.g. 25" },
+          { type: "select", label: "Base", options: ["Standard", "Reinforced", "With Drainage"], key: "base" },
+          { type: "checkbox", label: "Include Edging", key: "edging" },
+          { type: "textarea", label: "Pattern / Notes", key: "notes" }
+        ]
+      },
+      {
+        id: "painting",
+        name: "Painting",
+        icon: "🎨",
+        desc: "Interior & exterior painting",
+        questions: [
+          { type: "select", label: "Area", options: ["Interior", "Exterior", "Whole House"], key: "area" },
+          { type: "number", label: "Number of Rooms/Surfaces", key: "quantity" },
+          { type: "select", label: "Paint Quality", options: ["Budget", "Standard", "Premium"], key: "quality" },
+          { type: "checkbox", label: "Full Preparation", key: "prep" },
+          { type: "textarea", label: "Colour / Special Requests", key: "notes" }
+        ]
+      }
+      // Add more trades here later if you want
+    ];
+
+    let currentTrade = null;
+    let answers = {};
+
+    function renderHome() {
+      const container = document.getElementById('home');
+      container.innerHTML = trades.map(t => `
+        <div onclick="startEstimator('${t.id}')" class="trade-card card bg-zinc-900 border border-zinc-700 cursor-pointer p-6 rounded-3xl">
+          <div class="text-6xl mb-4">${t.icon}</div>
+          <h2 class="text-2xl font-bold mb-1">${t.name}</h2>
+          <p class="text-zinc-400">${t.desc}</p>
+        </div>
+      `).join('');
+    }
+
+    function startEstimator(id) {
+      currentTrade = trades.find(t => t.id === id);
+      answers = {};
+      document.getElementById('home').classList.add('hidden');
+      document.getElementById('estimator').classList.remove('hidden');
+      document.getElementById('trade-title').textContent = currentTrade.name;
+      renderQuestions();
+    }
+
+    function renderQuestions() {
+      const container = document.getElementById('questions');
+      container.innerHTML = currentTrade.questions.map(q => {
+        let input = '';
+        if (q.type === 'select') {
+          input = `<select onchange="updateAnswer('${q.key}', this.value)" class="select select-bordered w-full bg-zinc-800 border-zinc-600 text-white">
+            <option value="">Choose...</option>
+            ${q.options.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
+          </select>`;
+        } else if (q.type === 'number') {
+          input = `<input type="number" onchange="updateAnswer('${q.key}', this.value)" class="input input-bordered w-full bg-zinc-800 border-zinc-600 text-white" placeholder="${q.placeholder || ''}">`;
+        } else if (q.type === 'checkbox') {
+          input = `<label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" onchange="updateAnswer('${q.key}', this.checked)" class="checkbox checkbox-primary"><span>${q.label}</span></label>`;
+        } else if (q.type === 'textarea') {
+          input = `<textarea onchange="updateAnswer('${q.key}', this.value)" class="textarea textarea-bordered w-full h-28 bg-zinc-800 border-zinc-600 text-white" placeholder="Any extras..."></textarea>`;
+        }
+        return `<div><label class="label text-white">${q.label}</label>${input}</div>`;
+      }).join('');
+    }
+
+    function updateAnswer(key, value) {
+      answers[key] = value;
+      generateSpec();
+    }
+
+    function generateSpec() {
+      let spec = `JOB SPECIFICATION — ${currentTrade.name}\n`;
+      spec += `Date: ${new Date().toLocaleDateString('en-AU')}\n`;
+      spec += `Location: Perth, Western Australia\n\n`;
+
+      currentTrade.questions.forEach(q => {
+        if (answers[q.key] !== undefined && answers[q.key] !== '' && answers[q.key] !== false) {
+          const val = answers[q.key] === true ? 'Yes' : answers[q.key];
+          spec += `${q.label}: ${val}\n`;
+        }
+      });
+
+      if (answers.notes) spec += `\nNotes / Extras:\n${answers.notes}\n`;
+
+      spec += `\nPlease quote based exactly on the scope above. Contact me for questions.`;
+
+      document.getElementById('spec-output').textContent = spec;
+    }
+
+    function copySpec() {
+      const text = document.getElementById('spec-output').textContent;
+      navigator.clipboard.writeText(text).then(() => alert('✅ Copied! Paste into your message or email.'));
+    }
+
+    function downloadPDF() {
+      const text = document.getElementById('spec-output').textContent;
+      const win = window.open('', '_blank');
+      win.document.write(`<pre style="padding:40px; font-family:monospace; white-space:pre-wrap;">${text}</pre>`);
+      win.document.close();
+      setTimeout(() => win.print(), 300);
+    }
+
+    function shareLink() {
+      alert("Shareable link feature coming soon.\n\nFor now, just copy the spec above and send it to tradies.");
+    }
+
+    function backToHome() {
+      document.getElementById('estimator').classList.add('hidden');
+      document.getElementById('home').classList.remove('hidden');
+    }
+
+    // Start the app
+    window.onload = () => {
+      renderHome();
+    };
+  </script>
+</body>
+</html>
