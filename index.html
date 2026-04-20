@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SpecTap — Clear Job Specs for Tradie Quotes</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" type="text/css" />
+  <style>
+    body { font-family: system-ui, sans-serif; }
+  </style>
+</head>
+<body class="bg-zinc-950 text-white min-h-screen">
+  <div class="max-w-5xl mx-auto p-6">
+    <header class="text-center mb-12">
+      <h1 class="text-5xl font-bold text-emerald-400 mb-3">SpecTap</h1>
+      <p class="text-2xl">Send complete job specs to tradies in ~60 seconds</p>
+      <p class="text-emerald-500 mt-2">Built for Australia • Perth / WA focused • Free & Open Source</p>
+    </header>
+
+    <div id="home" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Populated by JS -->
+    </div>
+
+    <div id="estimator" class="hidden mt-8">
+      <button onclick="backToHome()" class="btn btn-ghost mb-6 text-white">← Back to Trades</button>
+      <h2 id="trade-title" class="text-4xl font-bold mb-8"></h2>
+      <div id="questions" class="space-y-8"></div>
+
+      <div class="mt-12 border-t border-zinc-700 pt-8">
+        <h3 class="text-2xl font-semibold mb-4">Your Job Specification</h3>
+        <div id="spec-output" class="bg-zinc-900 p-6 rounded-2xl border border-zinc-700 text-lg leading-relaxed whitespace-pre-wrap min-h-[220px]"></div>
+        
+        <div class="flex flex-wrap gap-4 mt-8">
+          <button onclick="copySpec()" class="btn btn-primary flex-1">📋 Copy to Clipboard</button>
+          <button onclick="downloadPDF()" class="btn btn-secondary flex-1">📄 Download PDF</button>
+          <button onclick="shareLink()" class="btn btn-accent flex-1">🔗 Shareable Link</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="trades.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
