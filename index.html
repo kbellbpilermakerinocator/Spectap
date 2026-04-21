@@ -11,8 +11,8 @@
     canvas { max-width: 100%; height: auto; display: block; margin: 0 auto; }
     
     .wheel-container {
-      width: min(360px, 92vw);
-      height: min(360px, 92vw);
+      width: min(380px, 94vw);   /* Increased for bigger wheel */
+      height: min(380px, 94vw);
       position: relative;
       margin: 0 auto;
     }
@@ -36,13 +36,13 @@
 
       <div class="wheel-container">
         <!-- Red Pointer -->
-        <div class="absolute -top-4 left-1/2 -translate-x-1/2 z-30 pointer-events-none">
+        <div class="absolute -top-5 left-1/2 -translate-x-1/2 z-30 pointer-events-none">
           <div class="w-0 h-0 
-                      border-l-[20px] border-l-transparent 
-                      border-r-[20px] border-r-transparent 
-                      border-b-[48px] border-b-red-500 drop-shadow-lg"></div>
+                      border-l-[22px] border-l-transparent 
+                      border-r-[22px] border-r-transparent 
+                      border-b-[52px] border-b-red-500 drop-shadow-lg"></div>
         </div>
-        <canvas id="wheel" width="360" height="360"></canvas>
+        <canvas id="wheel" width="380" height="380"></canvas>
       </div>
 
       <!-- Prize Indicator -->
@@ -84,7 +84,7 @@
   </div>
 
   <script>
-    // ==================== SPIN WHEEL - No text, bigger, bananas + % ====================
+    // ==================== SPIN WHEEL - Bigger by ~10mm ====================
     const segments = [
       { label: "20%",  emoji: "💰", color: "#ef4444" },
       { label: "🍌",   emoji: "🍌", color: "#f8fafc" },
@@ -102,10 +102,10 @@
     const ctx = canvas.getContext("2d");
 
     function drawWheel() {
-      const size = 360;
+      const size = 380;                 // Increased canvas size
       const cx = size / 2;
       const cy = size / 2;
-      const r = 148;        // Bigger wheel
+      const r = 158;                    // Increased radius (~10mm bigger)
 
       ctx.clearRect(0, 0, size, size);
       const numSlices = segments.length;
@@ -124,27 +124,29 @@
         ctx.lineWidth = 10;
         ctx.stroke();
 
-        // Draw emoji in the middle of each segment
+        // Draw emoji close to the edge
         ctx.save();
         ctx.translate(cx, cy);
         ctx.rotate(start + slice / 2);
         
         ctx.textAlign = "center";
         ctx.fillStyle = seg.color === "#f8fafc" ? "#111827" : "#f8fafc";
-        ctx.font = "bold 42px system-ui";
-        ctx.fillText(seg.emoji, 0, -12);
+        ctx.font = "bold 50px system-ui";   // Slightly bigger emoji for larger wheel
+        
+        const textRadius = r * 0.73;        // Still close to the edge
+        ctx.fillText(seg.emoji, 0, -textRadius);
         
         ctx.restore();
       });
 
       // Center hub
       ctx.beginPath();
-      ctx.arc(cx, cy, 48, 0, 2 * Math.PI);
+      ctx.arc(cx, cy, 50, 0, 2 * Math.PI);
       ctx.fillStyle = "#18181b";
       ctx.fill();
 
       ctx.beginPath();
-      ctx.arc(cx, cy, 32, 0, 2 * Math.PI);
+      ctx.arc(cx, cy, 34, 0, 2 * Math.PI);
       ctx.strokeStyle = "#27272a";
       ctx.lineWidth = 16;
       ctx.stroke();
