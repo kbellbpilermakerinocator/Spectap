@@ -10,7 +10,6 @@
     body { font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif; }
     canvas { max-width: 100%; height: auto; display: block; margin: 0 auto; }
     
-    /* Make wheel scale nicely */
     .wheel-container {
       width: min(320px, 85vw);
       height: min(320px, 85vw);
@@ -32,7 +31,7 @@
 
     <!-- Spin Wheel Section -->
     <div class="bg-zinc-900 border border-zinc-700 rounded-3xl p-5 sm:p-6 mb-10">
-      <h2 class="text-2xl font-bold text-center mb-2">🎰 Spin to Win Discount!</h2>
+      <h2 class="text-2xl font-bold text-center mb-1">🎰 Spin to Win Discount!</h2>
       <p class="text-center text-zinc-400 text-sm mb-6">5% • 10% • 20% off your next job</p>
 
       <div class="wheel-container">
@@ -41,17 +40,18 @@
           <div class="w-0 h-0 
                       border-l-[18px] border-l-transparent 
                       border-r-[18px] border-r-transparent 
-                      border-b-[42px] border-b-red-500"></div>
+                      border-b-[42px] border-b-red-500 drop-shadow-lg"></div>
         </div>
         <canvas id="wheel" width="320" height="320"></canvas>
       </div>
 
-      <button onclick="spinWheel()" id="spinBtn" 
-        class="mt-8 w-full btn btn-primary py-4 text-lg font-bold rounded-2xl">
-        SPIN THE WHEEL 🎡
-      </button>
+      <!-- Prize Indicator -->
+      <div id="result" class="mt-6 text-center text-2xl font-bold min-h-[80px] flex items-center justify-center"></div>
 
-      <div id="result" class="mt-6 text-center text-xl font-bold min-h-[64px]"></div>
+      <button onclick="spinWheel()" id="spinBtn" 
+        class="mt-4 w-full btn btn-primary py-4 text-xl font-bold rounded-2xl flex items-center justify-center gap-3">
+        SPIN THE WHEEL 🤡
+      </button>
     </div>
 
     <!-- Trade Selection -->
@@ -84,16 +84,16 @@
   </div>
 
   <script>
-    // ==================== SPIN WHEEL (8 segments, mobile friendly) ====================
+    // ==================== SPIN WHEEL - Red & White Segments ====================
     const segments = [
-      { label: "20% OFF", color: "#eab308" },
-      { label: "Banana",  color: "#10b981" },
-      { label: "10% OFF", color: "#3b82f6" },
-      { label: "Banana",  color: "#8b5cf6" },
-      { label: "5% OFF",  color: "#eab308" },
-      { label: "Banana",  color: "#10b981" },
-      { label: "10% OFF", color: "#3b82f6" },
-      { label: "Banana",  color: "#8b5cf6" }
+      { label: "20% OFF", color: "#ef4444" },   // Red
+      { label: "Banana",  color: "#f8fafc" },   // White
+      { label: "10% OFF", color: "#ef4444" },   // Red
+      { label: "Banana",  color: "#f8fafc" },   // White
+      { label: "5% OFF",  color: "#ef4444" },   // Red
+      { label: "Banana",  color: "#f8fafc" },   // White
+      { label: "10% OFF", color: "#ef4444" },   // Red
+      { label: "Banana",  color: "#f8fafc" }    // White
     ];
 
     let rotation = 0;
@@ -102,10 +102,10 @@
     const ctx = canvas.getContext("2d");
 
     function drawWheel() {
-      const size = Math.min(canvas.width, canvas.height);
+      const size = 320;
       const cx = size / 2;
       const cy = size / 2;
-      const r = size * 0.42;   // slightly smaller radius for better mobile fit
+      const r = 125;
 
       ctx.clearRect(0, 0, size, size);
       const numSlices = segments.length;
@@ -120,7 +120,7 @@
         ctx.fillStyle = seg.color;
         ctx.fill();
         ctx.strokeStyle = "#18181b";
-        ctx.lineWidth = 10;
+        ctx.lineWidth = 8;
         ctx.stroke();
 
         // Text
@@ -129,15 +129,15 @@
         ctx.rotate(start + slice / 2);
         
         ctx.textAlign = "center";
-        ctx.fillStyle = "#111827";
-        ctx.font = "bold 18px system-ui";
+        ctx.fillStyle = seg.color === "#f8fafc" ? "#111827" : "#f8fafc"; // dark text on white, white text on red
+        ctx.font = "bold 17px system-ui";
 
         const words = seg.label.split(" ");
         if (words.length > 1) {
-          ctx.fillText(words[0], 0, -68);
-          ctx.fillText(words[1], 0, -45);
+          ctx.fillText(words[0], 0, -65);
+          ctx.fillText(words[1], 0, -42);
         } else {
-          ctx.fillText(seg.label, 0, -55);
+          ctx.fillText(seg.label, 0, -52);
         }
         ctx.restore();
       });
@@ -149,7 +149,7 @@
       ctx.fill();
 
       ctx.beginPath();
-      ctx.arc(cx, cy, 30, 0, 2 * Math.PI);
+      ctx.arc(cx, cy, 28, 0, 2 * Math.PI);
       ctx.strokeStyle = "#27272a";
       ctx.lineWidth = 14;
       ctx.stroke();
@@ -187,12 +187,11 @@
 
           const prize = segments[index];
 
+          const resultEl = document.getElementById("result");
           if (prize.label.includes("%")) {
-            document.getElementById("result").innerHTML = 
-              `🎉 You won <span class="text-emerald-400">${prize.label}</span>!`;
+            resultEl.innerHTML = `🎉 You won <span class="text-emerald-400">${prize.label}</span>!`;
           } else {
-            document.getElementById("result").innerHTML = 
-              `🍌 Banana! Better luck next time 😅`;
+            resultEl.innerHTML = `🍌 Banana! Better luck next time 😅`;
           }
         }
       }
@@ -210,7 +209,6 @@
     ];
 
     let currentTrade = null;
-    let answers = {};
 
     function renderHome() {
       const container = document.getElementById("trade-grid");
@@ -225,7 +223,6 @@
 
     function startEstimator(id) {
       currentTrade = trades.find(t => t.id === id);
-      answers = {};
       document.getElementById("home").classList.add("hidden");
       document.getElementById("estimator").classList.remove("hidden");
       document.getElementById("trade-title").textContent = currentTrade.name;
@@ -259,28 +256,20 @@
     }
 
     document.addEventListener('input', () => {
-      if (!document.getElementById("estimator").classList.contains("hidden")) {
-        updateSpec();
-      }
+      if (!document.getElementById("estimator").classList.contains("hidden")) updateSpec();
     });
 
     function copySpec() {
       const text = document.getElementById("spec-output").textContent;
-      navigator.clipboard.writeText(text).then(() => {
-        alert("✅ Copied to clipboard! Paste into your tradie message.");
-      });
+      navigator.clipboard.writeText(text).then(() => alert("✅ Copied to clipboard!"));
     }
 
     function downloadPDF() {
       const text = document.getElementById("spec-output").textContent;
       const win = window.open('', '_blank');
-      win.document.write(`
-        <pre style="padding:40px; font-family:monospace; font-size:16px; white-space:pre-wrap; line-height:1.5;">
-          ${text}
-        </pre>
-      `);
+      win.document.write(`<pre style="padding:40px; font-family:monospace; white-space:pre-wrap;">${text}</pre>`);
       win.document.close();
-      setTimeout(() => win.print(), 600);
+      setTimeout(() => win.print(), 500);
     }
 
     function backToHome() {
@@ -294,11 +283,7 @@
       renderHome();
     };
 
-    // Redraw wheel on resize (important for mobile orientation change)
-    window.addEventListener('resize', () => {
-      if (!document.getElementById("estimator").classList.contains("hidden")) return;
-      drawWheel();
-    });
+    window.addEventListener('resize', drawWheel);
   </script>
 </body>
 </html>
