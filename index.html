@@ -74,16 +74,16 @@
   </div>
 
   <script>
-    // Casino-style wheel with 5/10/15/20% + Bananas
+    // All 8 segments filled: 4 discounts + 4 fruits (Banana + Apple)
     const segments = [
-      { label: "20%", emoji: "", color: "#ca8a04", textColor: "#111827" },   // Gold
-      { label: "🍌", emoji: "🍌", color: "#b91c1c", textColor: "#fff" },    // Red
-      { label: "10%", emoji: "", color: "#ca8a04", textColor: "#111827" },
+      { label: "20%", emoji: "",  color: "#ca8a04", textColor: "#111827" },  // Gold
+      { label: "🍌", emoji: "🍌", color: "#b91c1c", textColor: "#fff" },     // Red Banana
+      { label: "10%", emoji: "",  color: "#ca8a04", textColor: "#111827" },
+      { label: "🍎", emoji: "🍎", color: "#b91c1c", textColor: "#fff" },     // Red Apple
+      { label: "5%",  emoji: "",  color: "#ca8a04", textColor: "#111827" },
       { label: "🍌", emoji: "🍌", color: "#b91c1c", textColor: "#fff" },
-      { label: "5%",  emoji: "", color: "#ca8a04", textColor: "#111827" },
-      { label: "🍌", emoji: "🍌", color: "#b91c1c", textColor: "#fff" },
-      { label: "15%", emoji: "", color: "#ca8a04", textColor: "#111827" },
-      { label: "🍌", emoji: "🍌", color: "#b91c1c", textColor: "#fff" }
+      { label: "15%", emoji: "",  color: "#ca8a04", textColor: "#111827" },
+      { label: "🍎", emoji: "🍎", color: "#b91c1c", textColor: "#fff" }      // Red Apple
     ];
 
     let rotation = 0;
@@ -96,17 +96,15 @@
       const cx = size / 2;
       const cy = size / 2;
       const r = 165;
-      const innerR = 55;
 
       ctx.clearRect(0, 0, size, size);
-
       const numSlices = segments.length;
       const slice = (2 * Math.PI) / numSlices;
 
       segments.forEach((seg, i) => {
         const start = rotation + i * slice;
 
-        // Main segment
+        // Segment background
         ctx.beginPath();
         ctx.moveTo(cx, cy);
         ctx.arc(cx, cy, r, start, start + slice);
@@ -116,22 +114,22 @@
         ctx.lineWidth = 8;
         ctx.stroke();
 
-        // Text / Emoji near outer edge
+        // Symbol / Percentage
         ctx.save();
         ctx.translate(cx, cy);
         ctx.rotate(start + slice / 2);
 
         ctx.textAlign = "center";
         ctx.fillStyle = seg.textColor;
-        ctx.font = seg.emoji ? "bold 58px system-ui" : "bold 36px system-ui";
+        ctx.font = seg.emoji ? "bold 58px system-ui" : "bold 38px system-ui";
 
-        const radiusOffset = seg.emoji ? r * 0.68 : r * 0.65;
-        ctx.fillText(seg.emoji || seg.label, 0, -radiusOffset);
+        const offset = seg.emoji ? r * 0.68 : r * 0.65;
+        ctx.fillText(seg.emoji || seg.label, 0, -offset);
 
         ctx.restore();
       });
 
-      // Glowing rim (casino style)
+      // Glowing outer rim (casino style)
       ctx.beginPath();
       ctx.arc(cx, cy, r + 18, 0, 2 * Math.PI);
       ctx.strokeStyle = "#facc15";
@@ -140,13 +138,12 @@
       ctx.shadowBlur = 25;
       ctx.stroke();
 
-      // Inner dark ring
+      // Inner hub
       ctx.beginPath();
-      ctx.arc(cx, cy, innerR, 0, 2 * Math.PI);
+      ctx.arc(cx, cy, 55, 0, 2 * Math.PI);
       ctx.fillStyle = "#1f2937";
       ctx.fill();
 
-      // Metallic center
       ctx.beginPath();
       ctx.arc(cx, cy, 42, 0, 2 * Math.PI);
       ctx.fillStyle = "#4b5563";
@@ -171,7 +168,7 @@
       function animate(ts) {
         if (!startTime) startTime = ts;
         const progress = Math.min((ts - startTime) / duration, 1);
-        const eased = 1 - Math.pow(1 - progress, 6); // very dramatic slowdown
+        const eased = 1 - Math.pow(1 - progress, 6);
         rotation = target * eased;
 
         drawWheel();
@@ -192,14 +189,14 @@
           if (prize.label.includes("%")) {
             resultEl.innerHTML = `🎉 You won <span class="text-emerald-400">${prize.label}</span>!`;
           } else {
-            resultEl.innerHTML = `🍌 Banana! Better luck next time 😅`;
+            resultEl.innerHTML = `🍌🍎 Better luck next time!`;
           }
         }
       }
       requestAnimationFrame(animate);
     }
 
-    // Rest of the app (trades, estimator, etc.) remains the same
+    // ==================== MAIN APP (unchanged) ====================
     const trades = [
       { id: "fencing", name: "Fencing", icon: "🏡" },
       { id: "paving", name: "Paving", icon: "🧱" },
@@ -274,6 +271,7 @@
       document.getElementById("home").classList.remove("hidden");
     }
 
+    // Start
     window.onload = () => {
       drawWheel();
       renderHome();
