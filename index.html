@@ -84,16 +84,16 @@
   </div>
 
   <script>
-    // ==================== WHEEL WITH SYMBOLS (🍌 and 💰) ====================
+    // ==================== WHEEL WITH CHICKEN & HORSE ====================
     const segments = [
       { label: "20%", emoji: "💰", color: "#ef4444" },
       { label: "🍌", emoji: "🍌", color: "#f8fafc" },
       { label: "10%", emoji: "💰", color: "#ef4444" },
-      { label: "🍌", emoji: "🍌", color: "#f8fafc" },
-      { label: "5%", emoji: "💰", color: "#ef4444" },
+      { label: "🐔", emoji: "🐔", color: "#f8fafc" },   // Chicken
+      { label: "5%",  emoji: "💰", color: "#ef4444" },
       { label: "🍌", emoji: "🍌", color: "#f8fafc" },
       { label: "15%", emoji: "💰", color: "#ef4444" },
-      { label: "🍌", emoji: "🍌", color: "#f8fafc" }
+      { label: "🐎", emoji: "🐎", color: "#f8fafc" }    // Horse
     ];
 
     let rotation = 0;
@@ -114,7 +114,7 @@
       segments.forEach((seg, i) => {
         const start = rotation + i * slice;
 
-        // Draw segment
+        // Draw segment (red / white alternating)
         ctx.beginPath();
         ctx.moveTo(cx, cy);
         ctx.arc(cx, cy, r, start, start + slice);
@@ -133,7 +133,7 @@
         ctx.fillStyle = seg.color === "#f8fafc" ? "#111827" : "#f8fafc";
         ctx.font = "bold 52px system-ui";
         
-        const textRadius = r * 0.72;   // Close to the edge
+        const textRadius = r * 0.72;   // Close to outer edge
         ctx.fillText(seg.emoji, 0, -textRadius);
         
         ctx.restore();
@@ -158,16 +158,17 @@
       document.getElementById("spinBtn").disabled = true;
       document.getElementById("result").innerHTML = "";
 
-      const extraSpins = 5 + Math.random() * 4;
+      // 10 SECOND SPIN
+      const extraSpins = 8 + Math.random() * 5;   // More rotations for longer spin
       const target = rotation + (extraSpins * 2 * Math.PI) + Math.random() * 2 * Math.PI;
 
       let startTime = null;
-      const duration = 5200;
+      const duration = 10000;   // ← 10 seconds
 
       function animate(ts) {
         if (!startTime) startTime = ts;
         const progress = Math.min((ts - startTime) / duration, 1);
-        const eased = 1 - Math.pow(1 - progress, 4);
+        const eased = 1 - Math.pow(1 - progress, 5);   // Stronger ease-out for dramatic stop
         rotation = target * eased;
 
         drawWheel();
@@ -188,7 +189,7 @@
           if (prize.label.includes("%")) {
             resultEl.innerHTML = `🎉 You won <span class="text-emerald-400">${prize.label}</span>!`;
           } else {
-            resultEl.innerHTML = `🍌 Banana! Better luck next time 😅`;
+            resultEl.innerHTML = `😢 ${prize.emoji} Better luck next time!`;
           }
         }
       }
