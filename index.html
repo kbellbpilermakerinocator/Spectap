@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>SpecTap — Spin to Win</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SpecTap — Spin & Spec</title>
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet">
   <style>
@@ -12,39 +12,61 @@
   </style>
 </head>
 <body class="bg-zinc-950 text-zinc-100 min-h-screen">
-  <div class="max-w-md mx-auto p-4">
+  <div class="max-w-md mx-auto p-5">
+
+    <!-- Header -->
     <header class="text-center mb-8">
-      <h1 class="text-4xl font-bold text-emerald-400">SpecTap</h1>
-      <p class="text-zinc-400 text-sm">60-second specs for better tradie quotes</p>
+      <h1 class="text-5xl font-bold text-emerald-400">SpecTap</h1>
+      <p class="text-zinc-400">Clear specs in 60s • Better tradie quotes</p>
+      <div class="badge badge-success mt-3">Perth WA • 2026</div>
     </header>
 
-    <div class="bg-zinc-900 border border-zinc-700 rounded-3xl p-6">
-      <h2 class="text-2xl font-bold text-center mb-1">🎰 Spin to Win!</h2>
-      <p class="text-center text-zinc-400 text-sm mb-6">5% • 10% • 20% discount</p>
+    <!-- Spin Wheel -->
+    <div class="bg-zinc-900 border border-zinc-700 rounded-3xl p-6 mb-10">
+      <h2 class="text-2xl font-bold text-center mb-2">🎰 Spin to Win Discount!</h2>
+      <p class="text-center text-zinc-400 text-sm mb-6">5% • 10% • 20% off</p>
 
-      <div class="relative mx-auto" style="max-width: 280px;">
-        <div class="absolute -top-2 left-1/2 -translate-x-1/2 z-30">
-          <div class="w-0 h-0 border-l-[18px] border-l-transparent border-r-[18px] border-r-transparent border-b-[36px] border-b-red-500"></div>
+      <div class="relative mx-auto" style="width: 280px; height: 280px;">
+        <!-- Red Pointer -->
+        <div class="absolute -top-3 left-1/2 -translate-x-1/2 z-30">
+          <div class="w-0 h-0 border-l-[18px] border-l-transparent border-r-[18px] border-r-transparent border-b-[38px] border-b-red-500"></div>
         </div>
-        <canvas id="wheel" width="280" height="280" class="mx-auto"></canvas>
+        <canvas id="wheel" width="280" height="280"></canvas>
       </div>
 
       <button onclick="spinWheel()" id="spinBtn" 
-        class="mt-6 w-full btn btn-primary py-4 text-lg font-bold rounded-2xl">
+        class="mt-6 w-full btn btn-primary py-4 text-lg font-bold">
         SPIN THE WHEEL 🎡
       </button>
 
       <div id="result" class="mt-6 text-center text-xl font-bold min-h-[60px]"></div>
     </div>
 
-    <!-- Trade cards below (add your own) -->
-    <div class="mt-10 text-center text-zinc-500 text-sm">
-      Tap a trade below to start building your spec
+    <!-- Trade Selection -->
+    <div id="home">
+      <div class="grid grid-cols-2 gap-4" id="trade-grid"></div>
+    </div>
+
+    <!-- Estimator Screen -->
+    <div id="estimator" class="hidden">
+      <button onclick="backToHome()" class="btn btn-ghost mb-6">← Back to Trades</button>
+      <h2 id="trade-title" class="text-3xl font-bold mb-6"></h2>
+      <div id="questions" class="space-y-6"></div>
+
+      <div class="mt-10 bg-zinc-900 border border-zinc-700 rounded-3xl p-6">
+        <h3 class="font-semibold mb-4">Your Job Specification</h3>
+        <div id="spec-output" class="bg-zinc-950 p-5 rounded-2xl font-mono text-sm whitespace-pre-wrap min-h-[180px]"></div>
+        
+        <div class="flex gap-3 mt-6">
+          <button onclick="copySpec()" class="flex-1 btn btn-primary">📋 Copy</button>
+          <button onclick="downloadPDF()" class="flex-1 btn btn-secondary">📄 PDF</button>
+        </div>
+      </div>
     </div>
   </div>
 
   <script>
-    // Simple clean wheel code (same as before but smaller + more responsive)
+    // ==================== SPIN WHEEL ====================
     const segments = [
       { label: "20% OFF", color: "#10b981" },
       { label: "Banana", color: "#eab308" },
@@ -61,7 +83,7 @@
 
     function drawWheel() {
       const cx = 140, cy = 140, r = 125;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, 280, 280);
       const slice = (2 * Math.PI) / 6;
 
       segments.forEach((seg, i) => {
@@ -72,7 +94,7 @@
         ctx.fillStyle = seg.color;
         ctx.fill();
         ctx.strokeStyle = "#27272a";
-        ctx.lineWidth = 8;
+        ctx.lineWidth = 10;
         ctx.stroke();
 
         ctx.save();
@@ -81,7 +103,7 @@
         ctx.textAlign = "center";
         ctx.fillStyle = "#111827";
         ctx.font = "bold 19px system-ui";
-        ctx.fillText(seg.label, 0, -r * 0.58);
+        ctx.fillText(seg.label, 0, -68);
         ctx.restore();
       });
 
@@ -97,7 +119,7 @@
       document.getElementById("spinBtn").disabled = true;
       document.getElementById("result").innerHTML = "";
 
-      const target = rotation + (8 + Math.random() * 7) * 2 * Math.PI;
+      const target = rotation + (8 + Math.random() * 8) * 2 * Math.PI;
       let startTime = null;
       const duration = 4800;
 
@@ -120,15 +142,94 @@
           if (prize.label.includes("%")) {
             document.getElementById("result").innerHTML = `🎉 You won <span class="text-emerald-400">${prize.label}</span>!`;
           } else {
-            document.getElementById("result").innerHTML = `🍌 Banana! Try again!`;
+            document.getElementById("result").innerHTML = `🍌 Banana! Better luck next time!`;
           }
         }
       }
       requestAnimationFrame(animate);
     }
 
+    // ==================== MAIN APP ====================
+    const trades = [
+      { id: "fencing", name: "Fencing", icon: "🏡" },
+      { id: "paving", name: "Paving", icon: "🧱" },
+      { id: "painting", name: "Painting", icon: "🎨" },
+      { id: "electrical", name: "Electrical", icon: "⚡" },
+      { id: "plumbing", name: "Plumbing", icon: "🔧" },
+      { id: "landscaping", name: "Landscaping", icon: "🌳" }
+    ];
+
+    let currentTrade = null;
+    let answers = {};
+
+    function renderHome() {
+      const container = document.getElementById("trade-grid");
+      container.innerHTML = trades.map(t => `
+        <div onclick="startEstimator('${t.id}')" class="bg-zinc-900 border border-zinc-700 rounded-3xl p-6 text-center cursor-pointer hover:border-emerald-500">
+          <div class="text-6xl mb-4">${t.icon}</div>
+          <h3 class="font-semibold">${t.name}</h3>
+        </div>
+      `).join('');
+    }
+
+    function startEstimator(id) {
+      currentTrade = trades.find(t => t.id === id);
+      answers = {};
+      document.getElementById("home").classList.add("hidden");
+      document.getElementById("estimator").classList.remove("hidden");
+      document.getElementById("trade-title").textContent = currentTrade.name;
+
+      document.getElementById("questions").innerHTML = `
+        <div class="bg-zinc-900 border border-zinc-700 rounded-3xl p-6">
+          <label class="block text-sm font-medium mb-3">Size / Quantity</label>
+          <input type="text" id="size" class="input input-bordered w-full bg-zinc-800" placeholder="e.g. 25 metres">
+        </div>
+        <div class="bg-zinc-900 border border-zinc-700 rounded-3xl p-6">
+          <label class="block text-sm font-medium mb-3">Extras / Notes</label>
+          <textarea id="notes" class="textarea textarea-bordered w-full h-24 bg-zinc-800"></textarea>
+        </div>
+      `;
+    }
+
+    function updateSpec() {
+      const size = document.getElementById("size") ? document.getElementById("size").value : "";
+      const notes = document.getElementById("notes") ? document.getElementById("notes").value : "";
+      let spec = `JOB SPECIFICATION — ${currentTrade.name}\n`;
+      spec += `Date: ${new Date().toLocaleDateString('en-AU')}\n`;
+      spec += `Location: Perth, Western Australia\n\n`;
+      if (size) spec += `SIZE/QUANTITY: ${size}\n`;
+      if (notes) spec += `NOTES: ${notes}\n`;
+      spec += `\nPlease provide a quote based exactly on this scope.`;
+      document.getElementById("spec-output").textContent = spec;
+    }
+
+    // Auto update spec when typing
+    document.addEventListener('input', () => {
+      if (!document.getElementById("estimator").classList.contains("hidden")) updateSpec();
+    });
+
+    function copySpec() {
+      const text = document.getElementById("spec-output").textContent;
+      navigator.clipboard.writeText(text).then(() => alert("✅ Copied to clipboard! Paste into your message."));
+    }
+
+    function downloadPDF() {
+      const text = document.getElementById("spec-output").textContent;
+      const win = window.open('', '_blank');
+      win.document.write(`<pre style="padding:40px; font-family:monospace; white-space:pre-wrap;">${text}</pre>`);
+      win.document.close();
+      setTimeout(() => win.print(), 500);
+    }
+
+    function backToHome() {
+      document.getElementById("estimator").classList.add("hidden");
+      document.getElementById("home").classList.remove("hidden");
+    }
+
+    // Start
     window.onload = () => {
       drawWheel();
+      renderHome();
     };
   </script>
 </body>
