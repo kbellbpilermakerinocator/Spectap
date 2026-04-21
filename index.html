@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SpecTap — Spin to Win</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet">
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; }
+    canvas { max-width: 100%; height: auto; }
+  </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen">
+  <div class="max-w-md mx-auto p-4">
+    <header class="text-center mb-8">
+      <h1 class="text-4xl font-bold text-emerald-400">SpecTap</h1>
+      <p class="text-zinc-400 text-sm">60-second specs for better tradie quotes</p>
+    </header>
+
+    <div class="bg-zinc-900 border border-zinc-700 rounded-3xl p-6">
+      <h2 class="text-2xl font-bold text-center mb-1">🎰 Spin to Win!</h2>
+      <p class="text-center text-zinc-400 text-sm mb-6">5% • 10% • 20% discount</p>
+
+      <div class="relative mx-auto" style="max-width: 280px;">
+        <div class="absolute -top-2 left-1/2 -translate-x-1/2 z-30">
+          <div class="w-0 h-0 border-l-[18px] border-l-transparent border-r-[18px] border-r-transparent border-b-[36px] border-b-red-500"></div>
+        </div>
+        <canvas id="wheel" width="280" height="280" class="mx-auto"></canvas>
+      </div>
+
+      <button onclick="spinWheel()" id="spinBtn" 
+        class="mt-6 w-full btn btn-primary py-4 text-lg font-bold rounded-2xl">
+        SPIN THE WHEEL 🎡
+      </button>
+
+      <div id="result" class="mt-6 text-center text-xl font-bold min-h-[60px]"></div>
+    </div>
+
+    <!-- Trade cards below (add your own) -->
+    <div class="mt-10 text-center text-zinc-500 text-sm">
+      Tap a trade below to start building your spec
+    </div>
+  </div>
+
+  <script>
+    // Simple clean wheel code (same as before but smaller + more responsive)
+    const segments = [
+      { label: "20% OFF", color: "#10b981" },
+      { label: "Banana", color: "#eab308" },
+      { label: "10% OFF", color: "#3b82f6" },
+      { label: "Banana", color: "#eab308" },
+      { label: "5% OFF", color: "#8b5cf6" },
+      { label: "Banana", color: "#eab308" }
+    ];
+
+    let rotation = 0;
+    let isSpinning = false;
+    const canvas = document.getElementById("wheel");
+    const ctx = canvas.getContext("2d");
+
+    function drawWheel() {
+      const cx = 140, cy = 140, r = 125;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const slice = (2 * Math.PI) / 6;
+
+      segments.forEach((seg, i) => {
+        const start = rotation + i * slice;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, r, start, start + slice);
+        ctx.fillStyle = seg.color;
+        ctx.fill();
+        ctx.strokeStyle = "#27272a";
+        ctx.lineWidth = 8;
+        ctx.stroke();
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(start + slice / 2);
+        ctx.textAlign = "center";
+        ctx.fillStyle = "#111827";
+        ctx.font = "bold 19px system-ui";
+        ctx.fillText(seg.label, 0, -r * 0.58);
+        ctx.restore();
+      });
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, 38, 0, 2 * Math.PI);
+      ctx.fillStyle = "#18181b";
+      ctx.fill();
+    }
+
+    function spinWheel() {
+      if (isSpinning) return;
+      isSpinning = true;
+      document.getElementById("spinBtn").disabled = true;
+      document.getElementById("result").innerHTML = "";
+
+      const target = rotation + (8 + Math.random() * 7) * 2 * Math.PI;
+      let startTime = null;
+      const duration = 4800;
+
+      function animate(ts) {
+        if (!startTime) startTime = ts;
+        const progress = Math.min((ts - startTime) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 4);
+        rotation = target * eased;
+        drawWheel();
+
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          isSpinning = false;
+          document.getElementById("spinBtn").disabled = false;
+
+          const index = Math.floor((2 * Math.PI - (rotation % (2 * Math.PI))) / (2 * Math.PI / 6)) % 6;
+          const prize = segments[index];
+
+          if (prize.label.includes("%")) {
+            document.getElementById("result").innerHTML = `🎉 You won <span class="text-emerald-400">${prize.label}</span>!`;
+          } else {
+            document.getElementById("result").innerHTML = `🍌 Banana! Try again!`;
+          }
+        }
+      }
+      requestAnimationFrame(animate);
+    }
+
+    window.onload = () => {
+      drawWheel();
+    };
+  </script>
+</body>
+</html>
