@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SpecTap — Spin & Spec</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet">
+  <style>
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif; }
+    canvas { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+    .wheel-container { 
+      width: min(380px, 94vw); 
+      height: min(380px, 94vw); 
+      position: relative; 
+      margin: 0 auto; 
+    }
+  </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen pb-8">
+
+  <div class="max-w-md mx-auto px-4 py-6">
+    <!-- Header -->
+    <header class="text-center mb-8">
+      <h1 class="text-5xl font-bold text-emerald-400">SpecTap</h1>
+      <p class="text-zinc-400 mt-1">Clear job specs • Better tradie quotes</p>
+      <div class="badge badge-success mt-4 text-sm">Perth WA • 2026</div>
+    </header>
+
+    <!-- Spin Wheel -->
+    <div class="bg-zinc-900 border border-zinc-700 rounded-3xl p-6 mb-10">
+      <h2 class="text-2xl font-bold text-center mb-2">🎰 Spin to Win Discount!</h2>
+      <p class="text-center text-zinc-400 text-sm mb-6">5% • 10% • 15% • 20% off your next job</p>
+
+      <div class="wheel-container">
+        <!-- Pointer -->
+        <div class="absolute -top-6 left-1/2 -translate-x-1/2 z-30 pointer-events-none">
+          <div class="w-0 h-0 border-l-[26px] border-l-transparent border-r-[26px] border-r-transparent border-b-[60px] border-b-yellow-400 drop-shadow-2xl"></div>
+        </div>
+        <canvas id="wheel" width="380" height="380"></canvas>
+      </div>
+
+      <div id="result" class="mt-8 text-center min-h-[90px] flex items-center justify-center text-3xl font-bold"></div>
+
+      <button onclick="spinWheel()" id="spinBtn" 
+        class="mt-6 w-full btn btn-primary py-4 text-xl font-bold rounded-2xl flex items-center justify-center gap-3 bg-yellow-500 hover:bg-yellow-600 text-black">
+        SPIN THE WHEEL 🤡
+      </button>
+    </div>
+
+    <!-- Trade Selection -->
+    <div id="home">
+      <div class="grid grid-cols-2 gap-4" id="trade-grid"></div>
+    </div>
+
+    <!-- Estimator Screen -->
+    <div id="estimator" class="hidden">
+      <button onclick="backToHome()" class="btn btn-ghost mb-6 text-lg">← Back to Trades</button>
+      <h2 id="trade-title" class="text-3xl font-bold mb-6"></h2>
+      <div id="questions" class="space-y-6"></div>
+      <div class="mt-10 bg-zinc-900 border border-zinc-700 rounded-3xl p-6">
+        <h3 class="font-semibold mb-4">Your Job Specification</h3>
+        <div id="spec-output" class="bg-zinc-950 p-5 rounded-2xl font-mono text-sm whitespace-pre-wrap min-h-[180px] text-zinc-300"></div>
+        <div class="flex gap-3 mt-6">
+          <button onclick="copySpec()" class="flex-1 btn btn-primary">📋 Copy Spec</button>
+          <button onclick="downloadPDF()" class="flex-1 btn btn-secondary">📄 Save as PDF</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ALL 8 SEGMENTS FILLED — No blanks, no strict alternating
+    const segments = [
+      { label: "20%", emoji: "",  color: "#ca8a04", textColor: "#111827" },
+      { label: "🍌", emoji: "🍌", color: "#b91c1c", textColor: "#fff" },
+      { label: "10%", emoji: "",  color: "#ca8a04", textColor: "#111827" },
+      { label: "🍎", emoji: "🍎", color: "#b91c1c", textColor: "#fff" },
+      { label: "5%",  emoji: "",  color: "#ca8a04", textColor: "#111827" },
+      { label: "🍌", emoji: "🍌", color: "#b91c1c", textColor: "#fff" },
+      { label: "15%", emoji: "",  color: "#ca8a04", textColor: "#111827" },
+      { label: "🍎", emoji: "🍎", color: "#b91c1c", textColor: "#fff" }
+    ];
+
+    let rotation = 0;
+    let isSpinning = false;
+    const canvas = document.getElementById("wheel");
+    const ctx = canvas.getContext("2d");
+
+    function drawWheel() {
+      const size = 380;
+      const cx = size / 2;
+      const cy = size / 2;
+      const r = 165;
+
+      ctx.clearRect(0, 0, size, size);
+      const slice = (2 * Math.PI) / segments.length;
+
+      segments.forEach((seg, i) => {
+        const start = rotation + i * slice;
+
+        // Draw colored segment
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, r, start, start + slice);
+        ctx.fillStyle = seg.color;
+        ctx.fill();
+        ctx.strokeStyle = "#111827";
+        ctx.lineWidth = 10;
+        ctx.stroke();
+
+        // Draw symbol or percentage near the edge
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(start + slice / 2);
+
+        ctx.textAlign = "center";
+        ctx.fillStyle = seg.textColor;
+        ctx.font = seg.emoji ? "bold 58px system-ui" : "bold 38px system-ui";
+
+        const offset = seg.emoji ? r * 0.68 : r * 0.65;
+        ctx.fillText(seg.emoji || seg.label, 0, -offset);
+
+        ctx.restore();
+      });
+
+      // Glowing rim
+      ctx.shadowColor = "#facc15";
+      ctx.shadowBlur = 30;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r + 18, 0, 2 * Math.PI);
+      ctx.strokeStyle = "#facc15";
+      ctx.lineWidth = 24;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      // Center hub
+      ctx.beginPath();
+      ctx.arc(cx, cy, 55, 0, 2 * Math.PI);
+      ctx.fillStyle = "#1f2937";
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, 42, 0, 2 * Math.PI);
+      ctx.fillStyle = "#4b5563";
+      ctx.fill();
+      ctx.strokeStyle = "#d1d5db";
+      ctx.lineWidth = 14;
+      ctx.stroke();
+    }
+
+    function spinWheel() {
+      if (isSpinning) return;
+      isSpinning = true;
+      document.getElementById("spinBtn").disabled = true;
+      document.getElementById("result").innerHTML = "";
+
+      // Pick random winner
+      const winningIndex = Math.floor(Math.random() * segments.length);
+      const slice = (2 * Math.PI) / segments.length;
+      const centerOfSegment = winningIndex * slice + slice / 2;
+
+      const extraSpins = 10 + Math.random() * 6;
+      const target = rotation + extraSpins * 2 * Math.PI + (2 * Math.PI - centerOfSegment);
+
+      let startTime = null;
+      const duration = 10000; // 10 seconds
+
+      function animate(ts) {
+        if (!startTime) startTime = ts;
+        const progress = Math.min((ts - startTime) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 6);
+        rotation = target * eased;
+        drawWheel();
+
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          isSpinning = false;
+          document.getElementById("spinBtn").disabled = false;
+
+          const prize = segments[winningIndex];
+          const resultEl = document.getElementById("result");
+
+          if (prize.label.includes("%")) {
+            resultEl.innerHTML = `🎉 You won <span class="text-emerald-400">${prize.label}</span>!`;
+          } else {
+            resultEl.innerHTML = `🍌🍎 Better luck next time!`;
+          }
+        }
+      }
+      requestAnimationFrame(animate);
+    }
+
+    // Trade selection and estimator (unchanged)
+    const trades = [
+      { id: "fencing", name: "Fencing", icon: "🏡" },
+      { id: "paving", name: "Paving", icon: "🧱" },
+      { id: "painting", name: "Painting", icon: "🎨" },
+      { id: "electrical", name: "Electrical", icon: "⚡" },
+      { id: "plumbing", name: "Plumbing", icon: "🔧" },
+      { id: "landscaping", name: "Landscaping", icon: "🌳" }
+    ];
+
+    let currentTrade = null;
+
+    function renderHome() {
+      const container = document.getElementById("trade-grid");
+      container.innerHTML = trades.map(t => `
+        <div onclick="startEstimator('${t.id}')" 
+             class="bg-zinc-900 border border-zinc-700 rounded-3xl p-6 text-center cursor-pointer hover:border-emerald-500 active:scale-95 transition-transform">
+          <div class="text-6xl mb-4">${t.icon}</div>
+          <h3 class="font-semibold text-lg">${t.name}</h3>
+        </div>
+      `).join('');
+    }
+
+    function startEstimator(id) {
+      currentTrade = trades.find(t => t.id === id);
+      document.getElementById("home").classList.add("hidden");
+      document.getElementById("estimator").classList.remove("hidden");
+      document.getElementById("trade-title").textContent = currentTrade.name;
+
+      document.getElementById("questions").innerHTML = `
+        <div class="bg-zinc-900 border border-zinc-700 rounded-3xl p-6">
+          <label class="block text-sm font-medium mb-3">Size / Quantity</label>
+          <input type="text" id="size" class="input input-bordered w-full bg-zinc-800 text-base" placeholder="e.g. 25 metres of fencing">
+        </div>
+        <div class="bg-zinc-900 border border-zinc-700 rounded-3xl p-6">
+          <label class="block text-sm font-medium mb-3">Extras / Notes</label>
+          <textarea id="notes" class="textarea textarea-bordered w-full h-28 bg-zinc-800 text-base" placeholder="Any special requirements..."></textarea>
+        </div>
+      `;
+    }
+
+    function updateSpec() {
+      const size = document.getElementById("size")?.value || "";
+      const notes = document.getElementById("notes")?.value || "";
+      let spec = `JOB SPECIFICATION — ${currentTrade.name}\n`;
+      spec += `Date: ${new Date().toLocaleDateString('en-AU')}\n`;
+      spec += `Location: Perth, Western Australia\n\n`;
+      if (size) spec += `SIZE/QUANTITY: ${size}\n`;
+      if (notes) spec += `NOTES: ${notes}\n`;
+      spec += `\nPlease provide a quote based exactly on this scope.`;
+      document.getElementById("spec-output").textContent = spec;
+    }
+
+    document.addEventListener('input', () => {
+      if (!document.getElementById("estimator").classList.contains("hidden")) updateSpec();
+    });
+
+    function copySpec() {
+      const text = document.getElementById("spec-output").textContent;
+      navigator.clipboard.writeText(text).then(() => alert("✅ Copied to clipboard!"));
+    }
+
+    function downloadPDF() {
+      const text = document.getElementById("spec-output").textContent;
+      const win = window.open('', '_blank');
+      win.document.write(`<pre style="padding:40px; font-family:monospace; white-space:pre-wrap;">${text}</pre>`);
+      win.document.close();
+      setTimeout(() => win.print(), 500);
+    }
+
+    function backToHome() {
+      document.getElementById("estimator").classList.add("hidden");
+      document.getElementById("home").classList.remove("hidden");
+    }
+
+    // Initialize
+    window.onload = () => {
+      drawWheel();
+      renderHome();
+    };
+
+    window.addEventListener('resize', drawWheel);
+  </script>
+</body>
+</html>
